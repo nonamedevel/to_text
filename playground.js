@@ -58,6 +58,67 @@ function test1() {
 }
 
 /*
+    More interesting example
+*/
+function test1() {
+    Object.defineProperty(Number.prototype, 'toHappyString', {
+        configurable: true,
+        writable: true,
+        value: function () {
+            const val = this.valueOf()
+            return val.toString() + ' :)'
+        }
+    })
+    console.log((100).toHappyString())
+}
+
+/*
+    It is generally not recommended to mess with built-in prototypes
+    Let's extend it!
+*/
+function test() {
+    class HappyNumber extends Number {
+        toString() {
+            return this.valueOf().toString() + ' :)'
+        }
+        static create(num) {
+            return new HappyNumber(num)
+        }
+    }
+
+    function happyTest1() {
+        const num = new HappyNumber(100)
+        console.log(num.toString())
+    }
+
+    function happyTest1() {
+        console.log(HappyNumber.create(200).toString())
+    }
+
+    function happyTest() {
+        let num = HappyNumber.create(100)
+        num += 20
+        // console.log(num.toString())
+        console.log(HappyNumber.create(num).toString())
+    }
+
+    happyTest()
+}
+
+/*
+    Class constructor ClassName cannot be invoked without 'new'
+*/
+function test1() {
+    class ClassName {
+        constructor() {
+            console.log('hello')
+        }
+    }
+    const obj1 = new ClassName()
+    // const obj2 = ClassName()
+}
+
+/*
     The algorithm
     
     There are faster alternatives,
@@ -99,7 +160,7 @@ function test1() {
 /*
     Add unit
 */
-function test() {
+function test1() {
     function toText(num, unit) {
         if (!Number.isSafeInteger(num) || num <= 0) {
             return null

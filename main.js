@@ -1,8 +1,12 @@
-
-
-/****************************** Test ******************************/
+/*
+    Calling this extends the Number prototype.
+    Alternatively, we can export/import the converting function
+    and extend the Number prototype in this file
+*/
+require('./convert.js')
 
 const testCases = [
+    [0, 'ноль'],
     [1, 'один'],
     [2, 'два'],
     [3, 'три'],
@@ -118,20 +122,14 @@ const testCases = [
     ],
 ]
 
-function doTest(index) {
-    console.log(testCases[index][0].toText())
-    console.log(testCases[index][1])
-}
-
-function doAllTests() {
+function testWithoutUnit() {
     for (const testCase of testCases) {
         const str1 = testCase[0].toText()
         const str2 = testCase[1]
         if (str1 !== str2) {
-            console.log('*** FAIL ***')
             console.log('\nExpected:')
             console.log(str2)
-            console.log('\nGot:')
+            console.log('Got:')
             console.log(str1)
             return
         }
@@ -139,144 +137,45 @@ function doAllTests() {
     console.log('*** PASS ***')
 }
 
-
-/****************************** Implementation ******************************/
-
-function numberToRussianWords1(num, unit) {
-    if (!Number.isSafeInteger(num) || num <= 0) {
-        return null;
-    }
-
-    const ONES = [
-        'ноль', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять',
-        'десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать',
-        'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'
-    ]
-    
-    const TENS = [
-        '', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят',
-        'семьдесят', 'восемьдесят', 'девяносто'
-    ]
-    
-    const HUNDREDS = [
-        '', 'сто', 'двести', 'триста', 'четыреста', 'пятьсот',
-        'шестьсот', 'семьсот', 'восемьсот', 'девятьсот'
-    ]
-    
-    const SCALES = [
-        ['', '', '', 'm'],
-        ['тысяча', 'тысячи', 'тысяч', 'f'],
-        ['миллион', 'миллиона', 'миллионов', 'm'],
-        ['миллиард', 'миллиарда', 'миллиардов', 'm'],
-        ['триллион', 'триллиона', 'триллионов', 'm'],
-        ['квадриллион', 'квадриллиона', 'квадриллионов', 'm'],
-    ]
-    
-    function getOnes(num, gender) {
-        if (num === 1) {
-            return gender === 'f' ? 'одна' : 'один'
-        } else if (num === 2) {
-            return gender === 'f' ? 'две' : 'два'
-        } else {
-            return ONES[num]
+function testWithUnit() {
+    function test(str1, str2) {
+        if (str1 !== str2) {
+            console.log('\nExpected:')
+            console.log(str2)
+            console.log('Got:')
+            console.log(str1)
         }
     }
-    
-    function triToWords(num, gender) {
-        const parts = []
-        if (num === 0) {
-            return []
-        }
-        const h = Math.floor(num / 100)
-        const rem = num % 100
-        if (h) {
-            parts.push(HUNDREDS[h])
-        }
-        if (rem < 20) {
-            if (rem) {
-                parts.push(getOnes(rem, gender))
-            }
-        } else {
-            const t = Math.floor(rem / 10)
-            const o = rem % 10
-            parts.push(TENS[t])
-            if (o) {
-                parts.push(getOnes(o, gender))
-            }
-        }
-        return parts
-    }
-    
-    function scaleForm(n) {
-        const lastTwo = n % 100
-        if (lastTwo >= 11 && lastTwo <= 14) return 2
-        const last = n % 10
-        if (last === 1) return 0
-        if (last >= 2 && last <= 4) return 1
-        return 2
-    }
 
-    let parts = []
-    let cur = num
-    let scaleIdx = 0
+    // он
+    test((0).toText(['рубль', 'рубля', 'рублей']), 'ноль рублей')
+    test((1001001).toText(['рубль', 'рубля', 'рублей']), 'один миллион одна тысяча один рубль')
+    test((1001003).toText(['рубль', 'рубля', 'рублей']), 'один миллион одна тысяча три рубля')
+    test((1001005).toText(['рубль', 'рубля', 'рублей']), 'один миллион одна тысяча пять рублей')
 
-    while (cur > 0) {
-        const tri = cur % 1000
-        if (tri > 0) {
-            const scale = SCALES[scaleIdx]
-            const gender = scale[3]
-            const triWords = triToWords(tri, gender)
-            if (scaleIdx > 0) {
-                const formIdx = scaleForm(tri)
-                const scaleName = scale[formIdx]
-                parts = [...triWords, scaleName, ...parts]
-            } else {
-                parts = [...triWords, ...parts]
-            }
-        }
-        cur = Math.floor(cur / 1000)
-        scaleIdx += 1
-    }
+    // она
+    test((0).toText(['машина', 'машины', 'машин']), 'ноль машин')
+    test((1001001).toText(['машина', 'машины', 'машин']), 'один миллион одна тысяча одна машина')
+    test((1001003).toText(['машина', 'машины', 'машин']), 'один миллион одна тысяча три машины')
+    test((1001005).toText(['машина', 'машины', 'машин']), 'один миллион одна тысяча пять машин')
 
-    const numStr = parts.join(' ')
-
-    if (unit === undefined) {
-        return numStr
-    }
-
-    let form
-    const lastDigit = num % 10
-    if (lastDigit === 1) {
-        form = unit[0]
-    } else if (lastDigit >= 2 && lastDigit <= 4) {
-        form = unit[1]
-    } else {
-        form = unit[2]
-    }
-    return `${numStr} ${form}`
+    // оно
+    test((0).toText(['яблоко', 'яблока', 'яблок']), 'ноль яблок')
+    test((1001001).toText(['яблоко', 'яблока', 'яблок']), 'один миллион одна тысяча одно яблоко')
+    test((1001003).toText(['яблоко', 'яблока', 'яблок']), 'один миллион одна тысяча три яблока')
+    test((1001005).toText(['яблоко', 'яблока', 'яблок']), 'один миллион одна тысяча пять яблок')
 }
 
-Object.defineProperty(Number.prototype, 'toText', {
-    configurable: true,
-    writable: true,
-    value: function (unit) {
-        return numberToRussianWords1(this.valueOf(), unit)
-    }
-})
+// console.log((42).toText())
+// console.log((1e6).toText())
+// console.log((1.5e6).toText())
+// console.log((0).toText())
+// console.log((-5).toText())
+// console.log((3.14).toText())
+// console.log((Infinity).toText())
+// console.log((9007199254740992).toText())
+
+testWithUnit()
+testWithoutUnit()
 
 // console.log((123_456_789).toText())
-// doTest(2)
-// doAllTests()
-
-console.log((42).toText());
-console.log((1e6).toText());
-console.log((1.5e6).toText());
-console.log((0).toText());
-console.log((-5).toText());
-console.log((3.14).toText());
-console.log((Infinity).toText());
-console.log((9007199254740992).toText());
-
-console.log((1).toText(['рубль', 'рубля', 'рублей']))
-console.log((10).toText(['сообщение', 'сообщения', 'сообщений']))
-console.log((23).toText(['яблоко', 'яблока', 'яблок']))
